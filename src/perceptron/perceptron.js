@@ -48,13 +48,24 @@ p5Perceptron = {
     // Y coordinates will be inverted so that the origin starts from bottom
     const drawLine = f => p.line(-w, -f(-1)*h, w, -f(1)*h)
 
+    p5Perceptron.drawAxis(p, w, h)
     p.strokeWeight(5)
     // Draw target line
     p.stroke(100)
     drawLine(lf)
     // Draw Perceptron line
-    p.stroke(0)
+    p.stroke(0, 0, 255)
     // Function derived from x * wx + y * wy + bias * wbias = 0, solving for y
     drawLine(x => - pn.weights[0]/pn.weights[1] * x - pn.biasWeight/pn.weights[1])
+  },
+
+  /**
+   * Draw X and Y axis
+   */
+  drawAxis: (p, w, h) => {
+    p.stroke(0)
+    p.strokeWeight(2)
+    p.line(-w, 0, w, 0)
+    p.line(0, -h, 0, h)
   }
 }
