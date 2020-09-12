@@ -24,7 +24,7 @@ LinearFunctionApproximator = (w, h) => {
     lfa.sInput = lfa.makeInputGroup(p, lfa.settingsDiv, 'Slope [-1000,1000]: ', lfa.DEFAULT_SLOPE, lfa.updateNumberInput(-1000, 1000, lfa.DEFAULT_SLOPE))
     lfa.iInput = lfa.makeInputGroup(p, lfa.settingsDiv, 'Intercept [-1,1]: ', lfa.DEFAULT_INTERCEPT, lfa.updateNumberInput(-1, 1, lfa.DEFAULT_INTERCEPT))
     lfa.lrInput = lfa.makeInputGroup(p, lfa.settingsDiv, 'Learning Rate [0,1]: ', lfa.DEFAULT_LR, lfa.updateNumberInput(0, 1, lfa.DEFAULT_LR))
-    lfa.nSlider = lfa.makeSliderGroup(p, lfa.settingsDiv, 'N Samples [100, 10000]: ', 100, 5000, lfa.DEFAULT_SAMPLES, 100)
+    lfa.nSlider = lfa.makeSliderGroup(p, lfa.settingsDiv, 'N Samples [100, 5000]: ', 100, 5000, lfa.DEFAULT_SAMPLES, 100)
     lfa.initialized = true
 
     lfa.restart()

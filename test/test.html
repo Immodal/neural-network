@@ -1,9 +1,15 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.1.9/p5.min.js"></script>
 <script src="tinytest.js"></script>
+<script src="../src/utils.js"></script>
+<script src="../src/demo-base.js"></script>
+<script src="../src/perceptron/perceptron.js"></script>
+<script src="../src/perceptron/point.js"></script>
+<script src="../src/perceptron/linear-function-approximator.js"></script>
 <!--<script src="../src/sketch.js"></script> -->
-<script src="./game-tests.js"></script>
+<script src="./perceptron/perceptron-tests.js"></script>
 <script>
   let testObj = {}
+  Object.assign(testObj, PerceptronTests)
   // Run
   tests(testObj)
 </script>
