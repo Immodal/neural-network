@@ -23,7 +23,7 @@ const sketch = ( p ) => {
     demoSelect.option("Single Layer Perceptron", LFA)
     demoSelect.option("Neural Network", NN)
     demoSelect.changed(demoSelectedEvent)
-    demoSelect.value(NN)
+    demoSelect.value(LFA)
     demoSelectedEvent()
   }
 
