@@ -5,6 +5,7 @@ const sketch = ( p ) => {
 
   const LFA = 0
   const lfa = LinearFunctionApproximator(WIDTH, HEIGHT)
+  const NN = 1
 
   const demos = [lfa]
 
@@ -20,25 +21,27 @@ const sketch = ( p ) => {
     demoSelect.style('font-size', '13px')
     demoSelect.parent("#demoSelect")
     demoSelect.option("Single Layer Perceptron", LFA)
+    demoSelect.option("Neural Network", NN)
     demoSelect.changed(demoSelectedEvent)
+    demoSelect.value(NN)
+    demoSelectedEvent()
   }
 
   const demoSelectedEvent = () => {
     demos.forEach(d =>{ if(d.initialized) d.quit(p) })
 
     if (demoSelect.value() == LFA) lfa.init(p)
+    else if (demoSelect.value() == NN) {}
   }
 
   p.setup = () => {
-    initDemoSelect()
     initCanvas()
-
-    demoSelect.value(LFA)
-    lfa.init(p)
+    initDemoSelect()
   }
 
   p.draw = () => {
     if (demoSelect.value() == LFA) lfa.draw(p)
+    else if (demoSelect.value() == NN) {}
   }
 }
 

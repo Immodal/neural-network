@@ -5,11 +5,14 @@
 <script src="../src/perceptron/perceptron.js"></script>
 <script src="../src/perceptron/point.js"></script>
 <script src="../src/perceptron/linear-function-approximator.js"></script>
+<script src="../src/neural-network/neural-network.js"></script>
 <!--<script src="../src/sketch.js"></script> -->
 <script src="./perceptron/perceptron-tests.js"></script>
+<script src="./neural-network/neural-network-tests.js"></script>
 <script>
   let testObj = {}
   Object.assign(testObj, PerceptronTests)
+  Object.assign(testObj, NeuralNetworkTests)
   // Run
   tests(testObj)
 </script>
