@@ -61,16 +61,38 @@ NeuralNetworkTests = {
     let target = nn.toInput([0.5])
     nn.ihWeights = [[0.9,-0.8,0.7],[0.6,0.5,-0.4]]
     nn.hoWeights = [[-0.9,0.8]]
-    
+
     nn.train(input, target)
 
-    const ihWeightsExp = [[0.8835, -0.7835, 0.6835], [0.6112, 0.4888, -0.3888]]
+    const ihWeightsExp = [[0.9009, -0.8009, 0.7009], [0.5943, 0.5057, -0.4057]]
     ihWeightsExp.forEach((row, i) => row.map((x, j) => eq(x, math.round(nn.ihWeights[i][j], 4))))
-    const ihBiasExp = [[0.9835], [1.0112]]
+    const ihBiasExp = [[1.0009], [0.9943]]
     ihBiasExp.forEach((row, i) => row.map((x, j) => eq(x, math.round(nn.ihBias[i][j], 4))))
-    const hoWeightsExp = [[-0.8870, 0.8090]]
+    const hoWeightsExp = [[-0.9070, 0.7952]]
     hoWeightsExp.forEach((row, i) => row.map((x, j) => eq(x, math.round(nn.hoWeights[i][j], 4))))
-    const hoBiasExp = [[1.0134]]
+    const hoBiasExp = [[0.9928]]
     hoBiasExp.forEach((row, i) => row.map((x, j) => eq(x, math.round(nn.hoBias[i][j], 4))))
   },
+
+  /*"test": () => {
+    const data = [
+      {input:[[0],[0]], output:[[0]]},
+      {input:[[0],[1]], output:[[1]]},
+      {input:[[1],[0]], output:[[1]]},
+      {input:[[1],[1]], output:[[0]]},
+    ]
+    
+    const net = NeuralNetwork(2, 2, 1)
+    for (let i=0; i<3000; i++) {
+      const sample = data[Utils.randInt(0, data.length-1)]
+      net.train(sample.input, sample.output)
+    }
+    
+    console.log(net.predict(data[0].input)[0])
+    console.log(net.predict(data[1].input)[0])
+    console.log(net.predict(data[2].input)[0])
+    console.log(net.predict(data[3].input)[0])
+  },*/
 }
+
+

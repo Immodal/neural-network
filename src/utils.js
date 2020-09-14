@@ -1,5 +1,10 @@
 const Utils = {
   /**
+   * Returns a random integer between min and max (inclusive)
+   */
+  randInt: (min, max) => Math.floor(Utils.randFloat(min, max)),
+
+  /**
    * Returns a random float between min and max (inclusive)
    */
   randFloat: (min, max) => (Math.random()) * (max - min + 1) + min,
