@@ -18,6 +18,9 @@ LinearFunctionApproximator = (w, h) => {
    * @param {Object} p Object that is passed into the sketch function
    */
   lfa.init = p => {
+    lfa.canvas = p.createCanvas(lfa.w, lfa.h)
+    lfa.canvas.parent("#cv")
+
     lfa.viewDiv = lfa.makeDiv(p, "#main", "")
     lfa.valuesDiv = lfa.makeDiv(p, lfa.viewDiv, "Values")
     lfa.settingsDiv = lfa.makeDiv(p, lfa.viewDiv, "Settings")
@@ -36,10 +39,10 @@ LinearFunctionApproximator = (w, h) => {
 
   /**
    * Quit the approximator and clear everything associated with it
-   * @param {Object} p Object that is passed into the sketch function
    */
-  lfa.quit = p => {
-    p.background(255)
+  lfa.quit = () => {
+    lfa.restart()
+    lfa.canvas.remove()
     lfa.viewDiv.remove()
     lfa.initialized = false
   }

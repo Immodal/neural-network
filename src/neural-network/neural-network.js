@@ -5,7 +5,7 @@ Activations = {
   dSigmoid: y => y * (1 - y),
 }
 
-NeuralNetwork = (nInputs, nHidden, nOutputs, learningRate=0.2) => {
+NeuralNetwork = (nInputs, nHidden, nOutputs, learningRate=0.1) => {
   const nn = {}
 
   nn.lr = learningRate
@@ -97,31 +97,6 @@ NeuralNetwork = (nInputs, nHidden, nOutputs, learningRate=0.2) => {
 
     nn.ihWeights = math.add(nn.ihWeights, ihWeightsDelta)
     nn.ihBias = math.add(nn.ihBias, ihGradient)
-  }
-
-  nn.train2 = (input, target) => {
-    // Output of input through hidden layer
-    const ihOut = nn.feedForward(input, nn.ihWeights, nn.ihBias)
-    // Output of hidden layer through output layer
-    const hoOut =  nn.feedForward(ihOut, nn.hoWeights, nn.hoBias)
-
-    // Difference between prediction and target
-    const hoOutError = math.subtract(hoOut, target)
-    // gradient = (lr * derivative of feedforward output of current layer * error)
-    const hoGradient = math.multiply(hoOutError.map(row => row.map(nn.dactivation)), nn.lr)
-    // delta weights = gradient * transpose(feedforward output of previous layer)
-    const hoWeightsDelta = math.multiply(hoGradient, math.transpose(ihOut))
-
-    //console.log(hoWeightsDelta)
-
-    // Calculate the contribution of each node toward the error of this layer via their weights
-    const ihOutError = math.multiply(math.transpose(nn.hoWeights), hoOutError)
-    console.log(ihOutError)
-    const ihGradient = math.multiply(ihOutError.map(row => row.map(nn.dactivation)), nn.lr)
-    console.log(ihGradient)
-    const ihWeightsDelta = math.multiply(ihGradient, math.transpose(input))
-
-    console.log(ihWeightsDelta)
   }
 
   return nn

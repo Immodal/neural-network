@@ -48,5 +48,13 @@ DemoBase = () => {
     return label
   }
 
+  db.makeFileInputGroup = (p, parent, title, callback) => {
+    const titleObj = p.createP(title)
+    titleObj.parent(parent)
+
+    const fileInput = p.createFileInput(callback);
+    fileInput.parent(titleObj);
+  }
+
   return db
 }
