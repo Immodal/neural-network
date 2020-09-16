@@ -25,7 +25,7 @@ DemoBase = () => {
     return slider
   }
 
-  db.makeInputGroup = (p, parent, title, value, callback=()=>true) => {
+  db.makeInputGroup = (p, parent, title, value, callback=null) => {
     const titleObj = p.createP(title)
     titleObj.parent(parent)
 
@@ -33,21 +33,24 @@ DemoBase = () => {
     input.parent(titleObj)
     input.size(50)
 
-    const button = p.createButton("Set")
-    button.parent(titleObj)
-    button.mousePressed(() => callback(input))
+    if (callback!=null) {
+      const button = p.createButton("Set")
+      button.parent(titleObj)
+      button.mousePressed(() => callback(input))
+    }
+
     return input
   }
 
   /**
    * Validates and Updates the given input
    */
-  db.updateNumberInput = (min, max, initial, isInt=false, restart=true) => input => {
-    if (Utils.isNumber(input.value())) {
-      const value = isInt ? math.floor(input.value()) : input.value()
-      if (value<min) input.value(min)
-      else if (value>max) input.value(max)
-    } else input.value(initial)
+  db.updateNumberInput = (min, max, initial, isInt=false, restart=true) => inputObj => {
+    if (Utils.isNumber(inputObj.value())) {
+      const value = isInt ? math.floor(inputObj.value()) : inputObj.value()
+      if (value<min) inputObj.value(min)
+      else if (value>max) inputObj.value(max)
+    } else inputObj.value(initial)
 
     if (restart) db.restart()
   }

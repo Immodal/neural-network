@@ -26,7 +26,7 @@ NeuralNetwork = (nInputs, nHidden, nOutputs, learningRate=0.1) => {
   nn.hoBias = math.ones([nOutputs,1])
 
   /**
-   * 
+   * Get a prediction based on the current state of the network
    * @param {Array} input
    */
   nn.predict = input => {
@@ -49,7 +49,7 @@ NeuralNetwork = (nInputs, nHidden, nOutputs, learningRate=0.1) => {
   }
 
   /**
-   * 
+   * Feed the input forward through a layer
    * @param {*} input 
    * @param {*} weights 
    * @param {*} bias 
@@ -64,7 +64,7 @@ NeuralNetwork = (nInputs, nHidden, nOutputs, learningRate=0.1) => {
   }
 
   /**
-   * 
+   * Train the network based on the input and the target
    * @param {*} input 
    * @param {*} target 
    */
