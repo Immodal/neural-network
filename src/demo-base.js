@@ -39,6 +39,19 @@ DemoBase = () => {
     return input
   }
 
+  /**
+   * Validates and Updates the given input
+   */
+  db.updateNumberInput = (min, max, initial, isInt=false, restart=true) => input => {
+    if (Utils.isNumber(input.value())) {
+      const value = isInt ? math.floor(input.value()) : input.value()
+      if (value<min) input.value(min)
+      else if (value>max) input.value(max)
+    } else input.value(initial)
+
+    if (restart) db.restart()
+  }
+
   db.makeDataLabel = (p, parent, title, value) => {
     const titleObj = p.createP(title)
     titleObj.parent(parent)

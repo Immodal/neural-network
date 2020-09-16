@@ -4,9 +4,11 @@ const sketch = ( p ) => {
   const lfa = LinearFunctionApproximator(500, 500)
   const DREC = 1
   const drec = DigitRecognition(500, 500)
-  z = drec
+  const LA = 2
+  const la = LogicApproximator(500, 500)
 
-  const demos = [lfa, drec]
+  const demos = [lfa, drec, la]
+  z = demos
 
   let demoSelect = null
   const initDemoSelect = () => {
@@ -14,7 +16,8 @@ const sketch = ( p ) => {
     demoSelect.style('font-size', '13px')
     demoSelect.parent("#demoSelect")
     demoSelect.option("Linear Function Approximator", LFA)
-    demoSelect.option("Digit Recognition", DREC)
+    //demoSelect.option("Digit Recognition", DREC)
+    demoSelect.option("Logic Approximator", LA)
     demoSelect.changed(demoSelectedEvent)
     demoSelect.value(LFA)
     demoSelectedEvent()
@@ -25,6 +28,7 @@ const sketch = ( p ) => {
 
     if (demoSelect.value() == LFA) lfa.init(p)
     else if (demoSelect.value() == DREC) drec.init(p)
+    else if (demoSelect.value() == LA) la.init(p)
   }
 
   p.setup = () => {
@@ -34,6 +38,7 @@ const sketch = ( p ) => {
   p.draw = () => {
     if (demoSelect.value() == LFA) lfa.draw(p)
     else if (demoSelect.value() == DREC) {}
+    else if (demoSelect.value() == LA) la.draw(p)
   }
 }
 

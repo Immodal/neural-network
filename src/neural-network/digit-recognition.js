@@ -30,10 +30,13 @@ DigitRecognition = (w, h) => {
 
     drec.nn = NeuralNetwork(784, 64, 10)
     drec.trainIndex = 0
+    drec.testIndex = 0
   }
 
   drec.train = () => {
-    for(drec.trainIndex=0 ; drec.trainIndex<drec.trainData.length; drec.trainIndex++) {
+    //for(drec.trainIndex=0 ; drec.trainIndex<drec.trainData.length; drec.trainIndex++) {
+    const lim = drec.trainIndex + 5000
+    for(; drec.trainIndex<lim; drec.trainIndex++) {
       const input = drec.nn.toInput(drec.trainData[drec.trainIndex])
       const target = Array.from(Array(10), () => [0])
       target[drec.trainLabels[drec.trainIndex]] = [1]
@@ -44,6 +47,21 @@ DigitRecognition = (w, h) => {
       }
     }
     console.log("Done")
+  }
+
+  drec.test = () => {
+    let nCorrect = 0
+    for(drec.testIndex=0 ; drec.testIndex<5000; drec.testIndex++) {
+      const input = drec.nn.toInput(drec.testData[drec.testIndex])
+      const target = drec.testLabels[drec.testIndex]
+
+      const result = math.max(drec.nn.predict(input))
+      nCorrect += result == target ? 1 : 0
+      if(drec.testIndex % 200 == 0) {
+        console.log(`Testing at index ${drec.testIndex}, nCorrect: ${nCorrect}%`)
+      }
+    }
+    console.log(`Done, nCorrect: ${nCorrect}%`)
   }
 
   /**

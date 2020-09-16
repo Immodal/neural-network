@@ -57,18 +57,6 @@ LinearFunctionApproximator = (w, h) => {
   }
 
   /**
-   * Validates and Updates the given input
-   */
-  lfa.updateNumberInput = (min, max, initial) => input => {
-    if (Utils.isNumber(input.value())) {
-      if (input.value()<min) input.value(min)
-      else if (input.value()>max) input.value(max)
-    } else input.value(initial)
-
-    lfa.restart()
-  }
-
-  /**
    * Set fa.f to be a function that returns the result of y = mx + c
    * @param {Number} m Slope of line
    * @param {Number} c Intercept of line
