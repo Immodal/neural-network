@@ -106,11 +106,13 @@ LogicApproximator = (w, h) => {
    */
   la.draw = p => {
     if(la.go) {
+      const resolution = 10
+
+      p.translate(0, la.h-resolution)
       p.background(0)
 
       la.train(la.DEFAULT_SAMPLES)
   
-      const resolution = 10
       const cols = la.w / resolution
       const rows = la.h / resolution
       for (let i = 0; i < cols; i++) {
@@ -121,7 +123,7 @@ LogicApproximator = (w, h) => {
           const y = la.nn.predict(inputs)
           p.noStroke()
           p.fill(y * 255)
-          p.rect(i * resolution, j * resolution, resolution, resolution)
+          p.rect(i * resolution, -j * resolution, resolution, resolution)
         }
       }
   
@@ -168,8 +170,8 @@ LogicApproximator = (w, h) => {
   la.train = n => {
     la.nSamples += n
     for (let i = 0; i < n; i++) {
-      const data = la.data[Utils.randInt(0, la.data.length-1)];
-      la.nn.train(data.inputs, data.outputs);
+      const data = la.data[math.randomInt(0, la.data.length)]
+      la.nn.train(data.inputs, data.outputs)
     }
   }
 

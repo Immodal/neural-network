@@ -6,7 +6,7 @@ Point = lineFunction => {
 
   pt.f = lineFunction
   // [x, y] coordinates
-  pt.coords = [Utils.randFloat(-1, 1), Utils.randFloat(-1, 1)]
+  pt.coords = [math.random(-1, 1), math.random(-1, 1)]
   // Label based on the given lineFunction
   // if pt.y is higher than y calculated using pt.f(pt.x), then label as 1
   pt.label =  pt.coords[1] > pt.f(pt.coords[0]) ? 1 : -1
