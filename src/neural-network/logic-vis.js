@@ -45,7 +45,7 @@ LogicApproximator = (w, h) => {
       .parent(la.descriptionDiv)
     p.createP("" +
       "Another setting to try is 8 nodes with 2 hidden layers with \"Non-integer Inputs\" ticked. Convergence should start around " +
-      "15000 samples. Learning rate should be progressively reduced from 0.1 to 0.05.")
+      "15000 samples. Learning rate should be progressively reduced from 0.1 to 0.005.")
       .parent(la.descriptionDiv)
     p.createP("" +
       "Try changing the logic while training to watch how the decision boundaries for the network morph over time!")
