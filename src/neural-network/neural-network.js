@@ -114,7 +114,7 @@ NeuralNetwork = (nInputs, nHidden, nHiddenLayers, nOutputs, learningRate=0.1) =>
     // Training values for Output Layer
     // Error is difference between prediction and target
     const hoOutError = math.subtract(target, hoOut)
-    const [hoGradient, hoWeightsDelta] = calcValues(hoOut, hoOutError, ihOut)
+    const [hoGradient, hoWeightsDelta] = calcValues(hoOut, hoOutError, nn.hhWeights.length>0 ? hhOuts[hhOuts.length-1] : ihOut)
 
     // Training values for Hidden Layers
     const hhGradients = []

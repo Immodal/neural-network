@@ -34,19 +34,18 @@ LogicApproximator = (w, h) => {
     la.descriptionDiv.size(300, p.AUTO)
     p.createP("" +
       "This demo attempts to approximate the values found in the \"Logic\" section with a neural network. " +
-      "The neural network consists of 4 input nodes, 1 hidden layer with 4 (default) hidden nodes and 1 output node.")
-      .parent(la.descriptionDiv)
-    p.createP("" +
       "The canvas represents a cartesian plane where the X and Y axis goes from 0 to 1. " +
-      "It is also split into \"pixels\" where their positions on the plane are fed into the neural network. " +
-      "The neural network then outputs a value between 0 and 1 which translates into the brightness of the \"pixel\". " +
-      "0 is black and 1 is white. " + 
-      "This is meant to indicate how the network responds all values within the range of the canvas.")
+      "It is split into \"pixels\" whose positions are fed into the neural network. " +
+      "The neural network then outputs a value between 0 (black) and 1 (white) representing brightness of the \"pixel\". ")
       .parent(la.descriptionDiv)
     p.createP("" +
       "While a simple Perceptron is able to handle linearly separable function such as the AND and OR logic, additional nodes " +
       "are needed in order to handle non-linear functions like XOR and XNOR. " +
-      "Convergence generally occurs after processing around 5000 samples.")
+      "Convergence generally occurs after processing around 5000 samples on default settings.")
+      .parent(la.descriptionDiv)
+    p.createP("" +
+      "Another setting to try is 8 nodes with 2 hidden layers with \"Non-integer Inputs\" ticked. Convergence should start around " +
+      "15000 samples. Learning rate should be progressively reduced from 0.1 to 0.05.")
       .parent(la.descriptionDiv)
 
     la.viewDiv = la.makeDiv(p, "#main", "")
@@ -77,6 +76,8 @@ LogicApproximator = (w, h) => {
       'N Hidden Layers [1,10]: ', la.DEFAULT_N_HIDDEN_LAYERS, la.restart)
     la.lrInput = la.makeInputGroup(p, la.settingsDiv, 
       'Learning Rate [0,1]: ', la.DEFAULT_LR, la.updateLearningRate)
+    la.sampleCb = p.createCheckbox("Non-integer Inputs (For more complex boundaries)", false)
+    la.sampleCb.parent(la.settingsDiv)
     
     la.restart()
     la.initialized = true
@@ -100,7 +101,11 @@ LogicApproximator = (w, h) => {
   la.restart = () => {
     la.go = true
     la.nSamples = 0
-    la.nn = NeuralNetwork(2, parseInt(la.nHiddenNodesInput.value()), parseInt(la.nHiddenLayersInput.value()), 1, parseFloat(la.lrInput.value()))
+    la.nn = NeuralNetwork(2, 
+      parseInt(la.nHiddenNodesInput.value()), 
+      parseInt(la.nHiddenLayersInput.value()), 
+      1, 
+      parseFloat(la.lrInput.value()))
   }
 
   /**
@@ -173,7 +178,7 @@ LogicApproximator = (w, h) => {
   la.train = n => {
     la.nSamples += n
     for (let i = 0; i < n; i++) {
-      const data = la.sample(false)
+      const data = la.sample(!la.sampleCb.checked())
       la.nn.train(data.inputs, data.outputs)
     }
   }
