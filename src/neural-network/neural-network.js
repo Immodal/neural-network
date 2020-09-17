@@ -84,17 +84,17 @@ NeuralNetwork = (nInputs, nHidden, nHiddenLayers, nOutputs, learningRate=0.1) =>
     const ihOut = nn.feedForward(input, nn.ihWeights, nn.ihBias)
     // Output of all other hidden layers
     let hhOuts = []
-    let hoOut = null
-    if(nn.hhWeights.length==0) {
-      hoOut = nn.feedForward(ihOut, nn.hoWeights, nn.hoBias)
-    } else {
+    if(nn.hhWeights.length>0) {
       nn.hhWeights.forEach((weights, i)=> {
         hhOuts.push(hhOuts.length==0 ? 
           nn.feedForward(ihOut, weights, nn.hhBias[i]) :
           nn.feedForward(hhOuts[i-1], weights, nn.hhBias[i]) )
       })
-      hoOut = nn.feedForward(hhOuts[hhOuts.length-1], nn.hoWeights, nn.hoBias)
     }
+    // Output of output layer
+    const hoOut = nn.feedForward(
+      nn.hhWeights.length==0 ? ihOut : hhOuts[hhOuts.length-1], 
+      nn.hoWeights, nn.hoBias)
 
     // Difference between prediction and target
     const hoOutError = math.subtract(target, hoOut)
@@ -106,26 +106,23 @@ NeuralNetwork = (nInputs, nHidden, nHiddenLayers, nOutputs, learningRate=0.1) =>
     // delta weights = gradient * transpose(feedforward output of previous layer)
     const hoWeightsDelta = math.multiply(hoGradient, math.transpose(ihOut))
 
+    const hhGradients = []
+    const hhWeightsDeltas = []
+    let ihOutError = null
+    let dihOut = null
+    let ihGradient = null
+    let ihWeightsDelta = null
+    // Calculate the contribution of each node toward the error of this layer via their weights
     if(nn.hhWeights.length==0) {
-      // Calculate the contribution of each node toward the error of this layer via their weights
-      const ihOutError = math.multiply(math.transpose(nn.hoWeights), hoOutError)
-      const dihOut = ihOut.map(row => row.map(nn.dactivation))
-      const ihGradient = math.dotMultiply(math.multiply(dihOut, nn.lr), ihOutError)
-      const ihWeightsDelta = math.multiply(ihGradient, math.transpose(input))
-
-      // Update weights at the very end so error contribution calculations are accurate
-      nn.hoWeights = math.add(nn.hoWeights, hoWeightsDelta)
-      // Update bias, the weight of bias is always 1, so the change is only the gradient
-      nn.hoBias = math.add(nn.hoBias, hoGradient)
-
-      nn.ihWeights = math.add(nn.ihWeights, ihWeightsDelta)
-      nn.ihBias = math.add(nn.ihBias, ihGradient)
+      // Input to First Hidden Only
+      ihOutError = math.multiply(math.transpose(nn.hoWeights), hoOutError)
+      dihOut = ihOut.map(row => row.map(nn.dactivation))
+      ihGradient = math.dotMultiply(math.multiply(dihOut, nn.lr), ihOutError)
+      ihWeightsDelta = math.multiply(ihGradient, math.transpose(input))
     } else {
-      const hhGradients = []
-      const hhWeightsDeltas = []
       let error = null
+      // Hidden Layer
       for(let i=nn.hhWeights.length-1; i>=0; i--) {
-        // Calculate the contribution of each node toward the error of this layer via their weights
         error = i==nn.hhWeights.length-1 ? 
           math.multiply(math.transpose(nn.hoWeights), hoOutError) :
           math.multiply(math.transpose(nn.hhWeights[i]), error)
@@ -138,23 +135,23 @@ NeuralNetwork = (nInputs, nHidden, nHiddenLayers, nOutputs, learningRate=0.1) =>
         hhGradients.unshift(gradient)
         hhWeightsDeltas.unshift(weightsDelta)
       }
-
-      const ihOutError = math.multiply(math.transpose(nn.hhWeights[0]), error)
-      const dihOut = ihOut.map(row => row.map(nn.dactivation))
-      const ihGradient = math.dotMultiply(math.multiply(dihOut, nn.lr), ihOutError)
-      const ihWeightsDelta = math.multiply(ihGradient, math.transpose(input))
-
-      // Update weights at the very end so error contribution calculations are accurate
-      nn.hoWeights = math.add(nn.hoWeights, hoWeightsDelta)
-      // Update bias, the weight of bias is always 1, so the change is only the gradient
-      nn.hoBias = math.add(nn.hoBias, hoGradient)
-
-      nn.hhWeights = nn.hhWeights.map((layer, i) => math.add(layer, hhWeightsDeltas[i]))
-      nn.hhBias = nn.hhBias.map((layer,i) => math.add(layer, hhGradients[i]))
-
-      nn.ihWeights = math.add(nn.ihWeights, ihWeightsDelta)
-      nn.ihBias = math.add(nn.ihBias, ihGradient)
+      // Input to First Hidden
+      ihOutError = math.multiply(math.transpose(nn.hhWeights[0]), error)
+      dihOut = ihOut.map(row => row.map(nn.dactivation))
+      ihGradient = math.dotMultiply(math.multiply(dihOut, nn.lr), ihOutError)
+      ihWeightsDelta = math.multiply(ihGradient, math.transpose(input))
     }
+
+    // Update weights at the very end so error contribution calculations are accurate
+    nn.hoWeights = math.add(nn.hoWeights, hoWeightsDelta)
+    // Update bias, the weight of bias is always 1, so the change is only the gradient
+    nn.hoBias = math.add(nn.hoBias, hoGradient)
+
+    nn.hhWeights = nn.hhWeights.map((layer, i) => math.add(layer, hhWeightsDeltas[i]))
+    nn.hhBias = nn.hhBias.map((layer,i) => math.add(layer, hhGradients[i]))
+
+    nn.ihWeights = math.add(nn.ihWeights, ihWeightsDelta)
+    nn.ihBias = math.add(nn.ihBias, ihGradient)
   }
 
   return nn
