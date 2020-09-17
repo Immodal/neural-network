@@ -49,7 +49,7 @@ NeuralNetwork = (nInputs, nHidden, nHiddenLayers, nOutputs, learningRate=0.1) =>
 
   /**
    * Convenience function for taking a 1D Array and converting it to the expected Nx1 matrix for inputs.
-   * @param {*} inputArray 1D Array of inputs
+   * @param {Array} inputArray 1D Array of inputs
    */
   nn.toInput = array => {
     // Assume inputArray is a 1D array [1,...,N]
@@ -61,9 +61,9 @@ NeuralNetwork = (nInputs, nHidden, nHiddenLayers, nOutputs, learningRate=0.1) =>
 
   /**
    * Feed the input forward through a layer
-   * @param {*} input 
-   * @param {*} weights 
-   * @param {*} bias 
+   * @param {Array} input Matrix of outputs from the previous layer
+   * @param {Array} weights Matrix of weights for the layer
+   * @param {Array} bias Matrix of bias for the layer
    */
   nn.feedForward = (input, weights, bias) => {
     // Calculate weighted value of inputs for all 
@@ -76,8 +76,8 @@ NeuralNetwork = (nInputs, nHidden, nHiddenLayers, nOutputs, learningRate=0.1) =>
 
   /**
    * Train the network based on the input and the target
-   * @param {*} input 
-   * @param {*} target 
+   * @param {Array} input 
+   * @param {Array} target 
    */
   nn.train = (input, target) => {
     /**
@@ -90,9 +90,7 @@ NeuralNetwork = (nInputs, nHidden, nHiddenLayers, nOutputs, learningRate=0.1) =>
       // Derivative of current layers output
       const dOut = output.map(row => row.map(nn.dactivation))
       // This particular step requires element wise multiplication
-      // gradient = (lr * derivative of feedforward output of current layer * error)
       const gradient = math.dotMultiply(math.multiply(dOut, nn.lr), error)
-      // delta weights = gradient * transpose(feedforward output of previous layer)
       const weightsDelta = math.multiply(gradient, math.transpose(nextLayerOutput))
       return [gradient, weightsDelta]
     }
