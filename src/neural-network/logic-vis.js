@@ -11,6 +11,7 @@ LogicApproximator = (w, h) => {
   la.h = h
   la.LR_MIN = 0
   la.LR_MAX = 1
+  la.DEFAULT_N_HIDDEN_LAYERS = 1
   la.DEFAULT_N_HIDDEN_LAYER_NODES = 4
   la.DEFAULT_LR = 0.1
   la.DEFAULT_SAMPLES = 50
@@ -72,6 +73,8 @@ LogicApproximator = (w, h) => {
     la.nSamplesLabel = la.makeDataLabel(p, la.settingsDiv, "Samples Processed: ", 0)
     la.nHiddenNodesInput = la.makeInputGroup(p, la.settingsDiv, 
       'N Nodes Per Hidden Layer [1,100]: ', la.DEFAULT_N_HIDDEN_LAYER_NODES, la.restart)
+    la.nHiddenLayersInput = la.makeInputGroup(p, la.settingsDiv, 
+      'N Hidden Layers [1,10]: ', la.DEFAULT_N_HIDDEN_LAYERS, la.restart)
     la.lrInput = la.makeInputGroup(p, la.settingsDiv, 
       'Learning Rate [0,1]: ', la.DEFAULT_LR, la.updateLearningRate)
     
@@ -97,7 +100,7 @@ LogicApproximator = (w, h) => {
   la.restart = () => {
     la.go = true
     la.nSamples = 0
-    la.nn = NeuralNetwork(2, parseInt(la.nHiddenNodesInput.value()), 2, 1, parseFloat(la.lrInput.value()))
+    la.nn = NeuralNetwork(2, parseInt(la.nHiddenNodesInput.value()), parseInt(la.nHiddenLayersInput.value()), 1, parseFloat(la.lrInput.value()))
   }
 
   /**
@@ -170,8 +173,23 @@ LogicApproximator = (w, h) => {
   la.train = n => {
     la.nSamples += n
     for (let i = 0; i < n; i++) {
-      const data = la.data[math.randomInt(0, la.data.length)]
+      const data = la.sample(false)
       la.nn.train(data.inputs, data.outputs)
+    }
+  }
+
+  /**
+   * Generates a single sample to be fed into the neural network for training
+   * @param {boolean} getIntInputs If true, inputs values will only be 0 or 1. Otherwise they will randomly generate as [0,0.5) or [0.5,1).
+   */
+  la.sample = (getIntInputs=true) => {
+    const reference = la.data[math.randomInt(0, la.data.length)]
+    if (getIntInputs) return reference
+    else {
+      const data = {}
+      data.outputs = reference.outputs
+      data.inputs = reference.inputs.map(row => row.map(x => x==0 ? math.random(0, 0.5) : math.random(0.5, 1)))
+      return data
     }
   }
 

@@ -96,8 +96,6 @@ NeuralNetwork = (nInputs, nHidden, nHiddenLayers, nOutputs, learningRate=0.1) =>
       hoOut = nn.feedForward(hhOuts[hhOuts.length-1], nn.hoWeights, nn.hoBias)
     }
 
-    console.log(hhOuts)
-
     // Difference between prediction and target
     const hoOutError = math.subtract(target, hoOut)
     // Derivative of current layers output
@@ -126,7 +124,7 @@ NeuralNetwork = (nInputs, nHidden, nHiddenLayers, nOutputs, learningRate=0.1) =>
       const hhGradients = []
       const hhWeightsDeltas = []
       let error = null
-      for(let i=nn.hhWeights.length-1; i<=0; i--) {
+      for(let i=nn.hhWeights.length-1; i>=0; i--) {
         // Calculate the contribution of each node toward the error of this layer via their weights
         error = i==nn.hhWeights.length-1 ? 
           math.multiply(math.transpose(nn.hoWeights), hoOutError) :
