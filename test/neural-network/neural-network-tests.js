@@ -1,6 +1,6 @@
 NeuralNetworkTests = {
   "toInput": () => {
-    const nn = NeuralNetwork(3, 2, 1)
+    const nn = NeuralNetwork(3, 2, 1, 1)
     const arr = [1,2,3]
     const exp = [[1],[2],[3]]
     nn.toInput(arr).forEach((row, i) => {
@@ -10,7 +10,7 @@ NeuralNetworkTests = {
   },
 
   "feedForward": () => {
-    const nn = NeuralNetwork(3, 2, 2)
+    const nn = NeuralNetwork(3, 2, 1, 2)
 
     // Check calculations are correct
     const input = nn.toInput([1,1,1])
@@ -36,7 +36,7 @@ NeuralNetworkTests = {
   },
 
   "predict": () => {
-    let nn = NeuralNetwork(3, 2, 1)
+    let nn = NeuralNetwork(3, 2, 1, 1)
     let input = nn.toInput([1,1,1])
     nn.ihWeights = [[0.9,0.8,0.7],[0.6,0.5,0.4]]
     nn.hoWeights = [[0.9,0.8]]
@@ -56,7 +56,7 @@ NeuralNetworkTests = {
   },
 
   "train": () => {
-    let nn = NeuralNetwork(3, 2, 1)
+    let nn = NeuralNetwork(3, 2, 1, 1)
     let input = nn.toInput([1,-1,1])
     let target = nn.toInput([0.5])
     nn.ihWeights = [[0.9,-0.8,0.7],[0.6,0.5,-0.4]]
