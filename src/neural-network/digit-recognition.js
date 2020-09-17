@@ -28,7 +28,7 @@ DigitRecognition = (w, h) => {
     drec.makeFileInputGroup(p, drec.testingDiv, "Images: ", drec.loadFile(drec.TYPE_IMAGE, true))
     drec.makeFileInputGroup(p, drec.testingDiv, "Labels: ", drec.loadFile(drec.TYPE_LABEL, true))
 
-    drec.nn = NeuralNetwork(784, 64, 10)
+    drec.nn = NeuralNetwork(784, 64, 1, 10)
     drec.trainIndex = 0
     drec.testIndex = 0
   }

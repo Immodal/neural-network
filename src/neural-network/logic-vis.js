@@ -97,7 +97,7 @@ LogicApproximator = (w, h) => {
   la.restart = () => {
     la.go = true
     la.nSamples = 0
-    la.nn = NeuralNetwork(2, parseInt(la.nHiddenNodesInput.value()), 1, parseFloat(la.lrInput.value()))
+    la.nn = NeuralNetwork(2, parseInt(la.nHiddenNodesInput.value()), 2, 1, parseFloat(la.lrInput.value()))
   }
 
   /**
