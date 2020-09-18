@@ -5,30 +5,56 @@ Activations = {
   dSigmoid: y => y * (1 - y),
 }
 
+/**
+ * Neural Network Module
+ */
 NeuralNetwork = {
   /**
-   * Convenience function for taking a 1D Array and converting it to the expected Nx1 matrix for inputs.
-   * Assume inputArray is a 1D array [1,...,N]
-   * We'll have to convert it to a Nx1 matrix
-   * This converts inputArray to a 1xN matrix, and then transposes it to a Nx1:
-   * [1, 2, 3] becomes [[1], [2], [3]]
+   * This converts array to a 1xN matrix, and then transposes it to a Nx1: [1, 2, 3] -> [[1], [2], [3]]
    * @param {Array} array 1D Array of inputs
    */
   arrayToInput: array => math.transpose([array]),
 
   /**
+   * Converts an instance of NeuralNetwork to JSON
+   * @param {NeuralNetwork} nn Instance of NeuralNetwork
+   */
+  serialize: nn => JSON.stringify(nn),
+
+  /**
+   * Converts a data object or JSON string into a NeuralNetwork
+   * @param {*} data Object or JSON string
+   */
+  deserialize: data => {
+    if (typeof data == 'string') data = JSON.parse(data)
+    let nn = NeuralNetwork.construct(
+      data.ihWeights.length, 
+      data.hhWeights[0].length, data.hhWeights.length,
+      data.hoWeights.length,
+      data.lr,
+      data.activation, data.dactivation)
+    nn.ihWeights = data.ihWeights
+    nn.ihBias = data.ihBias
+    nn.hhWeights = data.hhWeights
+    nn.hhBias = data.hhBias
+    nn.hoWeights = data.hoWeights
+    nn.hoBias = data.hoBias
+    return nn;
+  },
+
+  /**
    * Neural Network Instance Constructor
    */
-  construct: (nInputs, nHidden, nHiddenLayers, nOutputs, learningRate=0.1) => {
+  construct: (
+    nInputs, nHidden, nHiddenLayers, nOutputs, 
+    learningRate=0.1,
+    activation=Activations.sigmoid, dactivation=Activations.dSigmoid) => {
     const nn = {}
 
     nn.lr = learningRate
 
-    // sigmoid
-    nn.activation = Activations.sigmoid
-
-    // derivative of sigmoid
-    nn.dactivation = Activations.dSigmoid
+    nn.activation = activation
+    nn.dactivation = dactivation
 
     // Number of columns in a matrix is equivalent to the number of inputs into the layer
     // Number of rows is equivalent to the number of nodes in the layer
