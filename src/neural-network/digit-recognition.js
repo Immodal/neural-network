@@ -42,35 +42,39 @@ DigitRecognition = (w, h) => {
     drec.initialized = true
   }
 
-  drec.train = () => {
-    for(drec.trainIndex=0 ; drec.trainIndex<drec.trainData.length; drec.trainIndex++) {
-    //const lim = drec.trainIndex + 5000
-    //for(; drec.trainIndex<lim && drec.trainIndex < drec.trainData.length; drec.trainIndex++) {
-      const input = drec.nn.toInput(drec.trainData[drec.trainIndex])
-      const target = Array.from(Array(10), () => [0])
-      target[drec.trainLabels[drec.trainIndex]] = [1]
+  drec.train = (epochs=1, runTest=false) => {
+    const order = Utils.range(drec.trainData.length)
+    Utils.shuffle(order)
+    console.log(`Training Start, ${new Date().toUTCString()}`)
+    for(let j=0; j<epochs; j++) {
+      for(let i=0 ; i<order.length; i++) {
+        const input = NeuralNetwork.arrayToInput(drec.trainData[order[i]])
+        const target = Array.from(Array(10), () => [0])
+        target[drec.trainLabels[order[i]]] = [1]
 
-      drec.nn.train(input, target)
-      if(drec.trainIndex % 200 == 0) {
-        console.log("Training at index " + drec.trainIndex)
+        drec.nn.train(input, target)
+        if(i % 10000 == 0) {
+          console.log("Epoch: " + j + ", Index: " + i + ", Time: " + new Date().toUTCString())
+        }
       }
+      if(runTest) drec.test()
     }
-    console.log("Done")
+    console.log(`Training Ended, ${new Date().toUTCString()}`)
   }
 
   drec.test = () => {
     let nCorrect = 0
-    for(drec.testIndex=0 ; drec.testIndex<drec.testData.length; drec.testIndex++) {
-      const input = drec.nn.toInput(drec.testData[drec.testIndex])
-      const target = drec.testLabels[drec.testIndex]
+    for(let i=0 ; i<drec.testData.length; i++) {
+      const input = NeuralNetwork.arrayToInput(drec.testData[i])
+      const target = drec.testLabels[i]
 
       const result = drec.nn.predict(input).reduce((iMax, x, i, arr) => x[0] > arr[iMax] ? i : iMax, 0)
       nCorrect += result == target ? 1 : 0
-      if(drec.testIndex % 200 == 0) {
-        console.log(`Testing at index ${drec.testIndex}, ${nCorrect} correct out of ${drec.testIndex+1}`)
+      if(i % 1000 == 0) {
+        console.log(`Testing at index ${i}, ${nCorrect} correct.`)
       }
     }
-    console.log(`Done, nCorrect: ${nCorrect}, Score: ${nCorrect/(drec.testIndex+1)}`)
+    console.log(`Done, nCorrect: ${nCorrect}, Score: ${nCorrect/(i+1)}`)
   }
 
   /**
@@ -78,23 +82,21 @@ DigitRecognition = (w, h) => {
    * @param {Object} p Object that is passed into the sketch function
    */
   drec.quit = p => {
-    la.restart()
-    la.canvas.remove()
-    la.viewDiv.remove()
-    la.initialized = false
+    drec.restart()
+    //drec.canvas.remove()
+    drec.viewDiv.remove()
+    drec.initialized = false
   }
 
   /**
    * Restart
    */
   drec.restart = () => {
-    drec.nn = NeuralNetwork(784, 
+    drec.nn = NeuralNetwork.construct(784, 
       parseInt(drec.nHiddenNodesInput.value()), 
       parseInt(drec.nHiddenLayersInput.value()), 
       10, 
       parseFloat(drec.lrInput.value()))
-    drec.trainIndex = 0
-    drec.testIndex = 0
   }
 
   /**
