@@ -16,10 +16,10 @@ const sketch = ( p ) => {
     demoSelect.style('font-size', '13px')
     demoSelect.parent("#demoSelect")
     demoSelect.option("Linear Function Approximator", LFA)
-    //demoSelect.option("Digit Recognition", DREC)
+    demoSelect.option("Digit Recognition", DREC)
     demoSelect.option("Logic Approximator", LA)
     demoSelect.changed(demoSelectedEvent)
-    demoSelect.value(LA)
+    demoSelect.value(DREC)
     demoSelectedEvent()
   }
 

@@ -9,7 +9,11 @@ DigitRecognition = (w, h) => {
   drec.initialized = false
   drec.w = w
   drec.h = h
-  drec.data = null
+  drec.LR_MIN = 0
+  drec.LR_MAX = 1
+  drec.DEFAULT_LR = 0.01
+  drec.DEFAULT_N_HIDDEN_LAYERS = 1
+  drec.DEFAULT_N_HIDDEN_LAYER_NODES = 20
   drec.TYPE_IMAGE = "image"
   drec.TYPE_LABEL = "label"
 
@@ -19,24 +23,29 @@ DigitRecognition = (w, h) => {
    */
   drec.init = p => {
     drec.viewDiv = drec.makeDiv(p, "#main", "")
+
+    drec.settingsDiv = drec.makeDiv(p, drec.viewDiv, "Settings")
+    drec.nHiddenNodesInput = drec.makeInputGroup(p, drec.settingsDiv, 
+      'N Nodes Per Hidden Layer [1,100]: ', drec.DEFAULT_N_HIDDEN_LAYER_NODES, drec.restart)
+    drec.nHiddenLayersInput = drec.makeInputGroup(p, drec.settingsDiv, 
+      'N Hidden Layers [1,10]: ', drec.DEFAULT_N_HIDDEN_LAYERS, drec.restart)
+    drec.lrInput = drec.makeInputGroup(p, drec.settingsDiv, 
+      'Learning Rate [0,1]: ', drec.DEFAULT_LR, drec.updateLearningRate)
     
-    drec.trainingDiv = drec.makeDiv(p, drec.viewDiv, "Training")
-    drec.makeFileInputGroup(p, drec.trainingDiv, "Images: ", drec.loadFile(drec.TYPE_IMAGE, false))
-    drec.makeFileInputGroup(p, drec.trainingDiv, "Labels: ", drec.loadFile(drec.TYPE_LABEL, false))
+    drec.filesDiv = drec.makeDiv(p, drec.viewDiv, "File Upload")
+    drec.makeFileInputGroup(p, drec.filesDiv, "Training Images: ", drec.loadFile(drec.TYPE_IMAGE, false))
+    drec.makeFileInputGroup(p, drec.filesDiv, "Training Labels: ", drec.loadFile(drec.TYPE_LABEL, false))
+    drec.makeFileInputGroup(p, drec.filesDiv, "Testing Images: ", drec.loadFile(drec.TYPE_IMAGE, true))
+    drec.makeFileInputGroup(p, drec.filesDiv, "Testing Labels: ", drec.loadFile(drec.TYPE_LABEL, true))
 
-    drec.testingDiv = drec.makeDiv(p, drec.viewDiv, "Testing")
-    drec.makeFileInputGroup(p, drec.testingDiv, "Images: ", drec.loadFile(drec.TYPE_IMAGE, true))
-    drec.makeFileInputGroup(p, drec.testingDiv, "Labels: ", drec.loadFile(drec.TYPE_LABEL, true))
-
-    drec.nn = NeuralNetwork(784, 64, 1, 10)
-    drec.trainIndex = 0
-    drec.testIndex = 0
+    drec.restart()
+    drec.initialized = true
   }
 
   drec.train = () => {
-    //for(drec.trainIndex=0 ; drec.trainIndex<drec.trainData.length; drec.trainIndex++) {
-    const lim = drec.trainIndex + 5000
-    for(; drec.trainIndex<lim; drec.trainIndex++) {
+    for(drec.trainIndex=0 ; drec.trainIndex<drec.trainData.length; drec.trainIndex++) {
+    //const lim = drec.trainIndex + 5000
+    //for(; drec.trainIndex<lim && drec.trainIndex < drec.trainData.length; drec.trainIndex++) {
       const input = drec.nn.toInput(drec.trainData[drec.trainIndex])
       const target = Array.from(Array(10), () => [0])
       target[drec.trainLabels[drec.trainIndex]] = [1]
@@ -51,17 +60,17 @@ DigitRecognition = (w, h) => {
 
   drec.test = () => {
     let nCorrect = 0
-    for(drec.testIndex=0 ; drec.testIndex<5000; drec.testIndex++) {
+    for(drec.testIndex=0 ; drec.testIndex<drec.testData.length; drec.testIndex++) {
       const input = drec.nn.toInput(drec.testData[drec.testIndex])
       const target = drec.testLabels[drec.testIndex]
 
-      const result = math.max(drec.nn.predict(input))
+      const result = drec.nn.predict(input).reduce((iMax, x, i, arr) => x[0] > arr[iMax] ? i : iMax, 0)
       nCorrect += result == target ? 1 : 0
       if(drec.testIndex % 200 == 0) {
-        console.log(`Testing at index ${drec.testIndex}, nCorrect: ${nCorrect}%`)
+        console.log(`Testing at index ${drec.testIndex}, ${nCorrect} correct out of ${drec.testIndex+1}`)
       }
     }
-    console.log(`Done, nCorrect: ${nCorrect}%`)
+    console.log(`Done, nCorrect: ${nCorrect}, Score: ${nCorrect/(drec.testIndex+1)}`)
   }
 
   /**
@@ -69,12 +78,23 @@ DigitRecognition = (w, h) => {
    * @param {Object} p Object that is passed into the sketch function
    */
   drec.quit = p => {
+    la.restart()
+    la.canvas.remove()
+    la.viewDiv.remove()
+    la.initialized = false
   }
 
   /**
    * Restart
    */
   drec.restart = () => {
+    drec.nn = NeuralNetwork(784, 
+      parseInt(drec.nHiddenNodesInput.value()), 
+      parseInt(drec.nHiddenLayersInput.value()), 
+      10, 
+      parseFloat(drec.lrInput.value()))
+    drec.trainIndex = 0
+    drec.testIndex = 0
   }
 
   /**
@@ -82,6 +102,14 @@ DigitRecognition = (w, h) => {
    * @param {Object} p Object that is passed into the sketch function
    */
   drec.draw = p => {
+  }
+
+  /**
+   * Verify input value and then update learning rate
+   */
+  drec.updateLearningRate = () => {
+    drec.updateNumberInput(drec.LR_MIN, drec.LR_MAX, drec.DEFAULT_LR, false, false)(drec.lrInput)
+    drec.nn.lr = parseFloat(drec.lrInput.value())
   }
 
   /**
