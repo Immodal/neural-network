@@ -41,7 +41,7 @@ DigitRecognition = (w, h) => {
     drec.loadNNButtonP.parent(drec.filesDiv)
     drec.loadNNInput = p.createElement('textarea')
     drec.loadNNInput.parent(drec.filesDiv)
-    drec.loadNNInput.attribute("rows", 10)
+    drec.loadNNInput.attribute("rows", 5)
     drec.loadNNInput.attribute("cols", 50)
     drec.makeButton(p, drec.loadNNButtonP, "Deserialize", drec.loadNN)
 
