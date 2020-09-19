@@ -11,6 +11,13 @@ DemoBase = () => {
     return div
   }
 
+  db.makeButton = (p, parent, title, callback=()=>{}) => {
+    btn = p.createButton(title)
+    btn.parent(parent)
+    btn.mousePressed(callback)
+    return btn
+  }
+
   db.makeSliderGroup = (p, parent, title, sliderMin, sliderMax, sliderStart, sliderStep, sliderCallback=()=>{}) => {
     const titleObj = p.createP(title)
     titleObj.parent(parent)
@@ -70,6 +77,8 @@ DemoBase = () => {
 
     const fileInput = p.createFileInput(callback);
     fileInput.parent(titleObj);
+
+    return fileInput
   }
 
   return db

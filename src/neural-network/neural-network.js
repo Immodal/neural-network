@@ -28,8 +28,9 @@ NeuralNetwork = {
   deserialize: data => {
     if (typeof data == 'string') data = JSON.parse(data)
     let nn = NeuralNetwork.construct(
+      data.ihWeights[0].length, 
       data.ihWeights.length, 
-      data.hhWeights[0].length, data.hhWeights.length,
+      data.hhWeights.length+1,
       data.hoWeights.length,
       data.lr,
       data.activation, data.dactivation)

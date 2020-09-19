@@ -13,7 +13,7 @@ DigitRecognition = (w, h) => {
   drec.LR_MAX = 1
   drec.DEFAULT_LR = 0.01
   drec.DEFAULT_N_HIDDEN_LAYERS = 1
-  drec.DEFAULT_N_HIDDEN_LAYER_NODES = 20
+  drec.DEFAULT_N_HIDDEN_LAYER_NODES = 28
   drec.TYPE_IMAGE = "image"
   drec.TYPE_LABEL = "label"
 
@@ -33,10 +33,23 @@ DigitRecognition = (w, h) => {
       'Learning Rate [0,1]: ', drec.DEFAULT_LR, drec.updateLearningRate)
     
     drec.filesDiv = drec.makeDiv(p, drec.viewDiv, "File Upload")
-    drec.makeFileInputGroup(p, drec.filesDiv, "Training Images: ", drec.loadFile(drec.TYPE_IMAGE, false))
-    drec.makeFileInputGroup(p, drec.filesDiv, "Training Labels: ", drec.loadFile(drec.TYPE_LABEL, false))
-    drec.makeFileInputGroup(p, drec.filesDiv, "Testing Images: ", drec.loadFile(drec.TYPE_IMAGE, true))
-    drec.makeFileInputGroup(p, drec.filesDiv, "Testing Labels: ", drec.loadFile(drec.TYPE_LABEL, true))
+    drec.saveNNButtonP = p.createP("Serialize and print NN to Dev Console: ")
+    drec.saveNNButtonP.parent(drec.filesDiv)
+    drec.makeButton(p, drec.saveNNButtonP, "Serialize", () => { console.log(NeuralNetwork.serialize(drec.nn)) })
+
+    drec.loadNNButtonP = p.createP("Load NN from JSON: ")
+    drec.loadNNButtonP.parent(drec.filesDiv)
+    drec.loadNNInput = p.createElement('textarea')
+    drec.loadNNInput.parent(drec.filesDiv)
+    drec.loadNNInput.attribute("rows", 10)
+    drec.loadNNInput.attribute("cols", 50)
+    drec.makeButton(p, drec.loadNNButtonP, "Deserialize", drec.loadNN)
+
+
+    drec.trainImInput = drec.makeFileInputGroup(p, drec.filesDiv, "Training Images: ", drec.loadFile(drec.TYPE_IMAGE, false))
+    drec.trainLblInput = drec.makeFileInputGroup(p, drec.filesDiv, "Training Labels: ", drec.loadFile(drec.TYPE_LABEL, false))
+    drec.testImInput = drec.makeFileInputGroup(p, drec.filesDiv, "Testing Images: ", drec.loadFile(drec.TYPE_IMAGE, true))
+    drec.testLblInput = drec.makeFileInputGroup(p, drec.filesDiv, "Testing Labels: ", drec.loadFile(drec.TYPE_LABEL, true))
 
     drec.restart()
     drec.initialized = true
@@ -74,7 +87,7 @@ DigitRecognition = (w, h) => {
         console.log(`Testing at index ${i}, ${nCorrect} correct.`)
       }
     }
-    console.log(`Done, nCorrect: ${nCorrect}, Score: ${nCorrect/(i+1)}`)
+    console.log(`Done, nCorrect: ${nCorrect}, Score: ${nCorrect/drec.testData.length}`)
   }
 
   /**
@@ -116,45 +129,77 @@ DigitRecognition = (w, h) => {
 
   /**
    * 
-   * @param {*} file 
+   */
+  drec.loadNN = () => {
+    try {
+      let data = JSON.parse(drec.loadNNInput.value());
+
+      // https://stackoverflow.com/questions/3710204/how-to-check-if-a-string-is-a-valid-json-string-in-javascript-without-using-try
+      // Handle non-exception-throwing cases:
+      // Neither JSON.parse(false) or JSON.parse(1234) throw errors, hence the type-checking,
+      // but... JSON.parse(null) returns null, and typeof null === "object", 
+      // so we must check for that, too. Thankfully, null is falsey, so this suffices:
+      if (data && typeof data === "object") {
+        drec.nn = NeuralNetwork.deserialize(data)
+      } else throw new Error("Invalid format for JSON.parse()")
+    } catch (e) {
+      console.log(e)
+    }
+  }
+
+  /**
+   * 
+   * @param {*} targetType 
+   * @param {*} isTestData 
    */
   drec.loadFile = (targetType, isTestData) => async p5File => {
-    let buffer = await p5File.file.arrayBuffer();
-    let headerCount = 4;
-    let headerView = new DataView(buffer, 0, 4 * headerCount);
-    let headers = new Array(headerCount).fill().map((_, i) => headerView.getUint32(4 * i, false));
-  
-    // Get file type from the magic number
-    let type, dataLength;
-    if(headers[0] == 2049) {
-      type = drec.TYPE_LABEL;
-      dataLength = 1;
-      headerCount = 2;
-    } else if(headers[0] == 2051) {
-      type = drec.TYPE_IMAGE;
-      dataLength = headers[2] * headers[3];
-    } else throw new Error("Unknown file type " + headers[0])
-  
-    let data = new Uint8Array(buffer, headerCount * 4);
-    if(type == targetType && type == drec.TYPE_IMAGE) {
-      dataArr = [];
-      for(let i = 0; i < headers[1]; i++) {
-        dataArr.push(Array.from(data.subarray(dataLength * i, dataLength * (i + 1))));
+    try {
+      let buffer = await p5File.file.arrayBuffer();
+      let headerCount = 4;
+      let headerView = new DataView(buffer, 0, 4 * headerCount);
+      let headers = new Array(headerCount).fill().map((_, i) => headerView.getUint32(4 * i, false));
+    
+      // Get file type from the magic number
+      let type, dataLength;
+      if(headers[0] == 2049) {
+        type = drec.TYPE_LABEL;
+        dataLength = 1;
+        headerCount = 2;
+      } else if(headers[0] == 2051) {
+        type = drec.TYPE_IMAGE;
+        dataLength = headers[2] * headers[3];
+      } else throw new Error("Unknown file type " + headers[0])
+    
+      let data = new Uint8Array(buffer, headerCount * 4);
+      if(type == targetType && type == drec.TYPE_IMAGE) {
+        dataArr = [];
+        for(let i = 0; i < headers[1]; i++) {
+          dataArr.push(Array.from(data.subarray(dataLength * i, dataLength * (i + 1))));
+        }
+        // Save
+        if(isTestData) {
+          drec.testData = dataArr;
+        } else {
+          drec.trainData = dataArr;
+        }
+      } else if(type == targetType && type == drec.TYPE_LABEL) {
+        // Save 
+        if(isTestData) {
+          drec.testLabels = data;
+        } else {
+          drec.trainLabels = data;
+        }
+      } else throw new Error("Incorrect file type, should be " + targetType)
+    } catch (e) {
+      console.log(e)
+      if (targetType == drec.TYPE_IMAGE) {
+        if (isTestData) drec.testImInput.value("")
+        else drec.trainImInput.value("")
+      } else if (targetType == drec.TYPE_LABEL) {
+        if (isTestData) drec.testLblInput.value("")
+        else drec.trainLblInput.value("")
       }
-      // Save
-      if(isTestData) {
-        drec.testData = dataArr;
-      } else {
-        drec.trainData = dataArr;
-      }
-    } else if(type == targetType && type == drec.TYPE_LABEL) {
-      // Save 
-      if(isTestData) {
-        drec.testLabels = data;
-      } else {
-        drec.trainLabels = data;
-      }
-    } else throw new Error("Incorrect file type, should be " + targetType)
+    }
   }
 
   return drec
