@@ -33,9 +33,15 @@ DigitRecognition = (w, h) => {
       'Learning Rate [0,1]: ', drec.DEFAULT_LR, drec.updateLearningRate)
     
     drec.filesDiv = drec.makeDiv(p, drec.viewDiv, "File Upload")
+
+    drec.trainImInput = drec.makeFileInputGroup(p, drec.filesDiv, "Training Images: ", drec.loadFile(drec.TYPE_IMAGE, false))
+    drec.trainLblInput = drec.makeFileInputGroup(p, drec.filesDiv, "Training Labels: ", drec.loadFile(drec.TYPE_LABEL, false))
+    drec.testImInput = drec.makeFileInputGroup(p, drec.filesDiv, "Testing Images: ", drec.loadFile(drec.TYPE_IMAGE, true))
+    drec.testLblInput = drec.makeFileInputGroup(p, drec.filesDiv, "Testing Labels: ", drec.loadFile(drec.TYPE_LABEL, true))
+
     drec.saveNNButtonP = p.createP("Serialize and print NN to Dev Console: ")
     drec.saveNNButtonP.parent(drec.filesDiv)
-    drec.makeButton(p, drec.saveNNButtonP, "Serialize", () => { console.log(NeuralNetwork.serialize(drec.nn)) })
+    drec.makeButton(p, drec.saveNNButtonP, "Serialize", drec.saveNN)
 
     drec.loadNNButtonP = p.createP("Load NN from JSON: ")
     drec.loadNNButtonP.parent(drec.filesDiv)
@@ -45,37 +51,46 @@ DigitRecognition = (w, h) => {
     drec.loadNNInput.attribute("cols", 50)
     drec.makeButton(p, drec.loadNNButtonP, "Deserialize", drec.loadNN)
 
-
-    drec.trainImInput = drec.makeFileInputGroup(p, drec.filesDiv, "Training Images: ", drec.loadFile(drec.TYPE_IMAGE, false))
-    drec.trainLblInput = drec.makeFileInputGroup(p, drec.filesDiv, "Training Labels: ", drec.loadFile(drec.TYPE_LABEL, false))
-    drec.testImInput = drec.makeFileInputGroup(p, drec.filesDiv, "Testing Images: ", drec.loadFile(drec.TYPE_IMAGE, true))
-    drec.testLblInput = drec.makeFileInputGroup(p, drec.filesDiv, "Testing Labels: ", drec.loadFile(drec.TYPE_LABEL, true))
-
     drec.restart()
     drec.initialized = true
   }
 
-  drec.train = (epochs=1, runTest=false) => {
+  drec.trainTest = epochs => {
+    console.log(`Getting baseline score...`)
+    let best = drec.test()
+
+    for(let j=0; j<epochs; j++) {
+      console.log("Epoch: " + j)
+      drec.train()
+
+      const score = drec.test()
+      if (score > best) {
+        console.log(`Network is best so far! Old: ${best}, New: ${score}`)
+        drec.saveNN()
+        best = score
+      }
+    }
+  }
+
+  drec.train = (reportingInterval=10000) => {
     const order = Utils.range(drec.trainData.length)
     Utils.shuffle(order)
-    console.log(`Training Start, ${new Date().toUTCString()}`)
-    for(let j=0; j<epochs; j++) {
-      for(let i=0 ; i<order.length; i++) {
-        const input = NeuralNetwork.arrayToInput(drec.trainData[order[i]])
-        const target = Array.from(Array(10), () => [0])
-        target[drec.trainLabels[order[i]]] = [1]
 
-        drec.nn.train(input, target)
-        if(i % 10000 == 0) {
-          console.log("Epoch: " + j + ", Index: " + i + ", Time: " + new Date().toUTCString())
-        }
+    console.log(`Training Start, ${new Date().toUTCString()}`)
+    for(let i=0 ; i<order.length; i++) {
+      const input = NeuralNetwork.arrayToInput(drec.trainData[order[i]])
+      const target = Array.from(Array(10), () => [0])
+      target[drec.trainLabels[order[i]]] = [1]
+
+      drec.nn.train(input, target)
+      if(reportingInterval>0 && i % reportingInterval == 0) {
+        console.log("Index: " + i + ", Time: " + new Date().toUTCString())
       }
-      if(runTest) drec.test()
     }
     console.log(`Training Ended, ${new Date().toUTCString()}`)
   }
 
-  drec.test = () => {
+  drec.test = (reportingInterval=5000) => {
     let nCorrect = 0
     for(let i=0 ; i<drec.testData.length; i++) {
       const input = NeuralNetwork.arrayToInput(drec.testData[i])
@@ -83,11 +98,14 @@ DigitRecognition = (w, h) => {
 
       const result = drec.nn.predict(input).reduce((iMax, x, i, arr) => x[0] > arr[iMax] ? i : iMax, 0)
       nCorrect += result == target ? 1 : 0
-      if(i % 1000 == 0) {
+      if(i % reportingInterval == 0) {
         console.log(`Testing at index ${i}, ${nCorrect} correct.`)
       }
     }
-    console.log(`Done, nCorrect: ${nCorrect}, Score: ${nCorrect/drec.testData.length}`)
+
+    const score = nCorrect/drec.testData.length
+    console.log(`Done, nCorrect: ${nCorrect}, Score: ${score}`)
+    return score
   }
 
   /**
@@ -126,6 +144,11 @@ DigitRecognition = (w, h) => {
     drec.updateNumberInput(drec.LR_MIN, drec.LR_MAX, drec.DEFAULT_LR, false, false)(drec.lrInput)
     drec.nn.lr = parseFloat(drec.lrInput.value())
   }
+
+  /**
+   * 
+   */
+  drec.saveNN = () => console.log(NeuralNetwork.serialize(drec.nn))
 
   /**
    * 
