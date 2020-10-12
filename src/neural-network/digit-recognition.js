@@ -6,6 +6,7 @@
  */
 DigitRecognition = (w, h) => {
   const drec = DemoBase()
+  drec.DEV = true
   drec.initialized = false
   drec.w = w
   drec.h = h
@@ -23,38 +24,44 @@ DigitRecognition = (w, h) => {
    */
   drec.init = p => {
     drec.viewDiv = drec.makeDiv(p, "#main", "")
-
-    drec.settingsDiv = drec.makeDiv(p, drec.viewDiv, "Settings")
-    drec.nHiddenNodesInput = drec.makeInputGroup(p, drec.settingsDiv, 
-      'N Nodes Per Hidden Layer [1,100]: ', drec.DEFAULT_N_HIDDEN_LAYER_NODES, drec.restart)
-    drec.nHiddenLayersInput = drec.makeInputGroup(p, drec.settingsDiv, 
-      'N Hidden Layers [1,10]: ', drec.DEFAULT_N_HIDDEN_LAYERS, drec.restart)
-    drec.lrInput = drec.makeInputGroup(p, drec.settingsDiv, 
-      'Learning Rate [0,1]: ', drec.DEFAULT_LR, drec.updateLearningRate)
     
-    drec.filesDiv = drec.makeDiv(p, drec.viewDiv, "File Upload")
+    drec.trainDiv = drec.makeDiv(p, drec.viewDiv, "Training")
 
-    drec.trainImInput = drec.makeFileInputGroup(p, drec.filesDiv, "Training Images: ", drec.loadFile(drec.TYPE_IMAGE, false))
-    drec.trainLblInput = drec.makeFileInputGroup(p, drec.filesDiv, "Training Labels: ", drec.loadFile(drec.TYPE_LABEL, false))
-    drec.testImInput = drec.makeFileInputGroup(p, drec.filesDiv, "Testing Images: ", drec.loadFile(drec.TYPE_IMAGE, true))
-    drec.testLblInput = drec.makeFileInputGroup(p, drec.filesDiv, "Testing Labels: ", drec.loadFile(drec.TYPE_LABEL, true))
+    drec.trainImInput = drec.makeFileInputGroup(p, drec.trainDiv, "Training Images: ", drec.loadFile(drec.TYPE_IMAGE, false))
+    drec.trainLblInput = drec.makeFileInputGroup(p, drec.trainDiv, "Training Labels: ", drec.loadFile(drec.TYPE_LABEL, false))
+    drec.testImInput = drec.makeFileInputGroup(p, drec.trainDiv, "Testing Images: ", drec.loadFile(drec.TYPE_IMAGE, true))
+    drec.testLblInput = drec.makeFileInputGroup(p, drec.trainDiv, "Testing Labels: ", drec.loadFile(drec.TYPE_LABEL, true))
 
-    drec.saveNNButtonP = p.createP("Serialize and print NN to Dev Console: ")
-    drec.saveNNButtonP.parent(drec.filesDiv)
-    drec.makeButton(p, drec.saveNNButtonP, "Serialize", drec.saveNN)
+    drec.nHiddenNodesInput = drec.makeInputGroup(p, drec.trainDiv, 
+      'N Nodes Per Hidden Layer [1,100]: ', drec.DEFAULT_N_HIDDEN_LAYER_NODES, drec.restart)
+    drec.nHiddenLayersInput = drec.makeInputGroup(p, drec.trainDiv, 
+      'N Hidden Layers [1,10]: ', drec.DEFAULT_N_HIDDEN_LAYERS, drec.restart)
 
     drec.loadNNButtonP = p.createP("Load NN from JSON: ")
-    drec.loadNNButtonP.parent(drec.filesDiv)
+    drec.loadNNButtonP.parent(drec.trainDiv)
     drec.loadNNInput = p.createElement('textarea')
-    drec.loadNNInput.parent(drec.filesDiv)
+    drec.loadNNInput.parent(drec.trainDiv)
     drec.loadNNInput.attribute("rows", 5)
     drec.loadNNInput.attribute("cols", 50)
     drec.makeButton(p, drec.loadNNButtonP, "Deserialize", drec.loadNN)
+
+    drec.lrInput = drec.makeInputGroup(p, drec.trainDiv, 
+      'Learning Rate [0,1]: ', drec.DEFAULT_LR, drec.updateLearningRate)
+
+    drec.saveNNButtonP = p.createP("Serialize and print NN to Dev Console: ")
+    drec.saveNNButtonP.parent(drec.trainDiv)
+    drec.makeButton(p, drec.saveNNButtonP, "Serialize", drec.saveNN)
+
+    if (!drec.DEV) drec.trainDiv.hide()
 
     drec.restart()
     drec.initialized = true
   }
 
+  /**
+   * Trains the current Neural Network and then tests it automatically for a given number of epochs
+   * @param {Integer} epochs Number of times to run the entire training dataset through the neural network
+   */
   drec.trainTest = epochs => {
     console.log(`Getting baseline score...`)
     let best = drec.test()
@@ -72,6 +79,10 @@ DigitRecognition = (w, h) => {
     }
   }
 
+  /**
+   * Train the current Neural Network on the training data
+   * @param {Integer} reportingInterval Number of records to count before logging progress
+   */
   drec.train = (reportingInterval=10000) => {
     const order = Utils.range(drec.trainData.length)
     Utils.shuffle(order)
@@ -90,6 +101,10 @@ DigitRecognition = (w, h) => {
     console.log(`Training Ended, ${new Date().toUTCString()}`)
   }
 
+  /**
+   * Test the current Neural Network on the test data
+   * @param {Integer} reportingInterval Number of records to count before logging progress
+   */
   drec.test = (reportingInterval=5000) => {
     let nCorrect = 0
     for(let i=0 ; i<drec.testData.length; i++) {
