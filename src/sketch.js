@@ -37,7 +37,7 @@ const sketch = ( p ) => {
 
   p.draw = () => {
     if (demoSelect.value() == LFA) lfa.draw(p)
-    else if (demoSelect.value() == DREC) {}
+    else if (demoSelect.value() == DREC) drec.draw(p)
     else if (demoSelect.value() == LA) la.draw(p)
   }
 }

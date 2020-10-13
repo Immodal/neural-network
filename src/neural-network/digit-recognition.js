@@ -14,29 +14,46 @@ DigitRecognition = (w, h) => {
   drec.LR_MAX = 1
   drec.DEFAULT_LR = 0.01
   drec.DEFAULT_N_HIDDEN_LAYERS = 1
-  drec.DEFAULT_N_HIDDEN_LAYER_NODES = 28
+  drec.DEFAULT_N_HIDDEN_LAYER_NODES = 20
   drec.TYPE_IMAGE = "image"
   drec.TYPE_LABEL = "label"
+  drec.userDrawn = false
 
   /**
    * Initialize
    * @param {Object} p Object that is passed into the sketch function
    */
   drec.init = p => {
-    drec.viewDiv = drec.makeDiv(p, "#main", "")
-    
-    drec.trainDiv = drec.makeDiv(p, drec.viewDiv, "Training")
+    drec.canvas = p.createCanvas(drec.w, drec.h)
+    drec.canvas.parent("#cv")
+    drec.userDigit = p.createGraphics(drec.w, drec.h)
+    //drec.userDigit.pixelDensity(1)
 
+    drec.viewDiv = drec.makeDiv(p, "#main", "Testing")
+    drec.viewDiv.size(300, p.AUTO)
+    p.createP("Draw a number on the black canvas and see what the Neural Network thinks it is. The number should fill the canvas.")
+      .parent(drec.viewDiv)
+    drec.numConfLabels = []
+    for (let i=0; i<10; i++) {
+      drec.numConfLabels.push(drec.makeDataLabel(p, drec.viewDiv, `${i}: `, "N/A"))
+    }
+    drec.clearBtn = drec.makeButton(p, drec.viewDiv, "Clear Canvas", 
+      () => { 
+        drec.userDigit.background(0)
+        drec.userDrawn=false
+        drec.numConfLabels.forEach(lbl => lbl.html("N/A"))
+      })
+    
+    // Start Training Div
+    drec.trainDiv = drec.makeDiv(p, "#main", "Developer Controls")
     drec.trainImInput = drec.makeFileInputGroup(p, drec.trainDiv, "Training Images: ", drec.loadFile(drec.TYPE_IMAGE, false))
     drec.trainLblInput = drec.makeFileInputGroup(p, drec.trainDiv, "Training Labels: ", drec.loadFile(drec.TYPE_LABEL, false))
     drec.testImInput = drec.makeFileInputGroup(p, drec.trainDiv, "Testing Images: ", drec.loadFile(drec.TYPE_IMAGE, true))
     drec.testLblInput = drec.makeFileInputGroup(p, drec.trainDiv, "Testing Labels: ", drec.loadFile(drec.TYPE_LABEL, true))
-
     drec.nHiddenNodesInput = drec.makeInputGroup(p, drec.trainDiv, 
       'N Nodes Per Hidden Layer [1,100]: ', drec.DEFAULT_N_HIDDEN_LAYER_NODES, drec.restart)
     drec.nHiddenLayersInput = drec.makeInputGroup(p, drec.trainDiv, 
       'N Hidden Layers [1,10]: ', drec.DEFAULT_N_HIDDEN_LAYERS, drec.restart)
-
     drec.loadNNButtonP = p.createP("Load NN from JSON: ")
     drec.loadNNButtonP.parent(drec.trainDiv)
     drec.loadNNInput = p.createElement('textarea')
@@ -44,21 +61,89 @@ DigitRecognition = (w, h) => {
     drec.loadNNInput.attribute("rows", 5)
     drec.loadNNInput.attribute("cols", 50)
     drec.makeButton(p, drec.loadNNButtonP, "Deserialize", drec.loadNN)
-
     drec.lrInput = drec.makeInputGroup(p, drec.trainDiv, 
       'Learning Rate [0,1]: ', drec.DEFAULT_LR, drec.updateLearningRate)
-
     drec.saveNNButtonP = p.createP("Serialize and print NN to Dev Console: ")
     drec.saveNNButtonP.parent(drec.trainDiv)
     drec.makeButton(p, drec.saveNNButtonP, "Serialize", drec.saveNN)
-
     if (!drec.DEV) drec.trainDiv.hide()
+    // End Training Div
 
     drec.restart()
+    drec.nn = NeuralNetwork.deserialize(JSON.parse(defaultNN))
     drec.initialized = true
   }
 
   /**
+   * Restart
+   */
+  drec.restart = () => {
+    drec.nn = NeuralNetwork.construct(784, 
+      parseInt(drec.nHiddenNodesInput.value()), 
+      parseInt(drec.nHiddenLayersInput.value()), 
+      10, 
+      parseFloat(drec.lrInput.value()))
+  }
+
+  /**
+   * Draw function to be called by sketch.js
+   * @param {Object} p Object that is passed into the sketch function
+   */
+  drec.draw = p => {
+    p.background(0)
+    drec.userDigit.get().resize(28, 28)
+    p.image(drec.userDigit, 0, 0)
+    if (p.mouseIsPressed) {
+      drec.userDrawn = true
+      drec.userDigit.fill(255)
+      drec.userDigit.stroke(255)
+      drec.userDigit.strokeWeight(45)
+      drec.userDigit.line(p.mouseX, p.mouseY, p.pmouseX, p.pmouseY)
+    }
+
+    if(drec.userDrawn) drec.guessUserDigit()
+  }
+
+  /**
+   * Quit and clear everything associated with it
+   * @param {Object} p Object that is passed into the sketch function
+   */
+  drec.quit = p => {
+    drec.restart()
+    drec.canvas.remove()
+    drec.viewDiv.remove()
+    drec.trainDiv.remove()
+    drec.initialized = false
+  }
+
+  /**
+   * 
+   */
+  drec.guessUserDigit = () => {
+    let img = drec.userDigit.get()
+    img.resize(28, 28)
+    img.loadPixels()
+    let input = []
+    for (let i = 0; i < 784; i++) {
+      // img is in RGBA, we only use R values because image is grayscale
+      input.push([img.pixels[i * 4] / 255])
+    }
+    let predictions = drec.nn.predict(input)
+    let max = 0
+    let maxInd = -1
+    drec.numConfLabels.forEach((lbl, i) => {
+      const conf = predictions[i][0]
+      lbl.html(`${(conf*100).toFixed(2)}%`)
+      lbl.style('color', '#000000')
+      if(conf>=max) {
+        max = conf
+        maxInd = i
+      }
+    })
+    drec.numConfLabels[maxInd].style('color', '#00ff00')
+  }
+
+    /**
    * Trains the current Neural Network and then tests it automatically for a given number of epochs
    * @param {Integer} epochs Number of times to run the entire training dataset through the neural network
    */
@@ -94,7 +179,10 @@ DigitRecognition = (w, h) => {
       let inputs = []
       let targets = []
       for(let j=0; j<batchSize; j++) {
-        inputs.push(NeuralNetwork.arrayToInput(drec.trainData[order[i+j]]))
+        inputs.push(
+          // Normalize inputs
+          NeuralNetwork.arrayToInput(math.divide(drec.trainData[order[i+j]], 255))
+        )
         targets.push(Array.from(Array(10), () => [0]))
         targets[targets.length-1][drec.trainLabels[order[i+j]]] = [1]
         reportCounter += 1
@@ -129,42 +217,6 @@ DigitRecognition = (w, h) => {
     const score = nCorrect/drec.testData.length
     console.log(`Done, nCorrect: ${nCorrect}, Score: ${score}`)
     return score
-  }
-
-  /**
-   * Quit and clear everything associated with it
-   * @param {Object} p Object that is passed into the sketch function
-   */
-  drec.quit = p => {
-    drec.restart()
-    //drec.canvas.remove()
-    drec.viewDiv.remove()
-    drec.initialized = false
-  }
-
-  /**
-   * Restart
-   */
-  drec.restart = () => {
-    drec.nn = NeuralNetwork.construct(784, 
-      parseInt(drec.nHiddenNodesInput.value()), 
-      parseInt(drec.nHiddenLayersInput.value()), 
-      10, 
-      parseFloat(drec.lrInput.value()))
-  }
-
-  /**
-   * Draw function to be called by sketch.js
-   * @param {Object} p Object that is passed into the sketch function
-   */
-  drec.draw = p => {
-    p.background(0)
-    p.image(drec.userDigit, 0, 0)
-    if (p.mouseIsPressed) {
-      drec.userDigit.fill(255)
-      drec.userDigit.stroke(255)
-      drec.userDigit.ellipse(p.mouseX, p.mouseY, 16)
-    }
   }
 
   /**
