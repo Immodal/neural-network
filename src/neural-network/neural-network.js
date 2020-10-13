@@ -104,11 +104,39 @@ NeuralNetwork = {
     }
 
     /**
-     * Train the network based on the input and the target
+     * Train the network based on a single input and the target
      * @param {Array} input 
      * @param {Array} target 
      */
     nn.train = (input, target) => {
+      const values = nn._train(input, target)
+      nn._update(values)
+    }
+
+    /**
+     * Train the network based on a batch of inputs and their targets
+     * @param {Array} inputs 
+     * @param {Array} targets 
+     */
+    nn.trainBatch = (inputs, targets) => {
+      const values = inputs.reduce(
+        (acc, input, i) => {
+          const val = nn._train(input, targets[i])
+          if (i==0) return val
+          else return acc.map((v, j) => (j==2 || j==3) ? 
+            v.map((layer, k) => math.add(layer, val[j][k])) :
+            math.add(v, val[j]))
+        }, null)
+
+      nn._update(values)
+    }
+
+    /**
+     * 
+     * @param {Array} input 
+     * @param {Array} target 
+     */
+    nn._train = (input, target) => {
       // Calculates the gradient and weightsDelta for a layer
       const calcValues = (output, error, nextLayerOutput) => {
         // Derivative of current layers output
@@ -163,9 +191,18 @@ NeuralNetwork = {
         math.multiply(math.transpose(nn.hoWeights), hoOutError)
       const [ihGradient, ihWeightsDelta] = calcValues(ihOut, ihOutError, input)
 
-      // Update weights at the very end so error contribution calculations are accurate
+      return [ihGradient, ihWeightsDelta, hhGradients, hhWeightsDeltas, hoGradient, hoWeightsDelta]
+    }
+
+    /**
+     * 
+     * @param {*} values 
+     */
+    nn._update = values => {
+      const [ihGradient, ihWeightsDelta, hhGradients, hhWeightsDeltas, hoGradient, hoWeightsDelta] = values
+      // Update weights and biases of the nn using outcome of _train
+      // the weight of bias is always 1, so the change is only the gradient
       nn.hoWeights = math.add(nn.hoWeights, hoWeightsDelta)
-      // Update bias, the weight of bias is always 1, so the change is only the gradient
       nn.hoBias = math.add(nn.hoBias, hoGradient)
 
       nn.hhWeights = nn.hhWeights.map((layer, i) => math.add(layer, hhWeightsDeltas[i]))

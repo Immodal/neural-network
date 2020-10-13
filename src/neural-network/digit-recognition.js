@@ -81,21 +81,29 @@ DigitRecognition = (w, h) => {
 
   /**
    * Train the current Neural Network on the training data
-   * @param {Integer} reportingInterval Number of records to count before logging progress
+   * @param {Integer} reportingInterval Minimum number of records to count before logging progress
    */
-  drec.train = (reportingInterval=10000) => {
+  drec.train = (batchSize=100, reportingInterval=10000) => {
     const order = Utils.range(drec.trainData.length)
     Utils.shuffle(order)
 
     console.log(`Training Start, ${new Date().toUTCString()}`)
-    for(let i=0 ; i<order.length; i++) {
-      const input = NeuralNetwork.arrayToInput(drec.trainData[order[i]])
-      const target = Array.from(Array(10), () => [0])
-      target[drec.trainLabels[order[i]]] = [1]
+    let reportCounter = 0
+    for(let i=0 ; i<order.length; i+=batchSize) {
+      // Create batch
+      let inputs = []
+      let targets = []
+      for(let j=0; j<batchSize; j++) {
+        inputs.push(NeuralNetwork.arrayToInput(drec.trainData[order[i+j]]))
+        targets.push(Array.from(Array(10), () => [0]))
+        targets[targets.length-1][drec.trainLabels[order[i+j]]] = [1]
+        reportCounter += 1
+      }
 
-      drec.nn.train(input, target)
-      if(reportingInterval>0 && i % reportingInterval == 0) {
+      drec.nn.trainBatch(inputs, targets)
+      if(reportingInterval>0 && reportCounter > reportingInterval) {
         console.log("Index: " + i + ", Time: " + new Date().toUTCString())
+        reportCounter = 0
       }
     }
     console.log(`Training Ended, ${new Date().toUTCString()}`)
@@ -150,6 +158,13 @@ DigitRecognition = (w, h) => {
    * @param {Object} p Object that is passed into the sketch function
    */
   drec.draw = p => {
+    p.background(0)
+    p.image(drec.userDigit, 0, 0)
+    if (p.mouseIsPressed) {
+      drec.userDigit.fill(255)
+      drec.userDigit.stroke(255)
+      drec.userDigit.ellipse(p.mouseX, p.mouseY, 16)
+    }
   }
 
   /**
