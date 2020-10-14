@@ -22,7 +22,7 @@ const sketch = ( p ) => {
     demoSelect.option("Digit Recognition", DREC)
     demoSelect.option("Logic Approximator", LA)
     demoSelect.changed(demoSelectedEvent)
-    demoSelect.value(DREC)
+    demoSelect.value(LA)
     demoSelectedEvent()
   }
 
