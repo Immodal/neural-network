@@ -6,7 +6,6 @@
  */
 DigitRecognition = (w, h) => {
   const drec = DemoBase()
-  drec.DEV = true
   drec.initialized = false
   drec.w = w
   drec.h = h
@@ -17,7 +16,6 @@ DigitRecognition = (w, h) => {
   drec.DEFAULT_N_HIDDEN_LAYER_NODES = 20
   drec.TYPE_IMAGE = "image"
   drec.TYPE_LABEL = "label"
-  drec.userDrawn = false
 
   /**
    * Initialize
@@ -27,33 +25,46 @@ DigitRecognition = (w, h) => {
     drec.canvas = p.createCanvas(drec.w, drec.h)
     drec.canvas.parent("#cv")
     drec.userDigit = p.createGraphics(drec.w, drec.h)
-    //drec.userDigit.pixelDensity(1)
+    drec.userDigit.pixelDensity(1)
 
     drec.viewDiv = drec.makeDiv(p, "#main", "Testing")
-    drec.viewDiv.size(300, p.AUTO)
-    p.createP("Draw a number on the black canvas and see what the Neural Network thinks it is. The number should fill the canvas.")
+    drec.viewDiv.size(350, p.AUTO)
+    p.createP("Draw a number between 0 and 9 on the black canvas and see what the Neural Network thinks it is. The number should be a decent size relative to the canvas.")
       .parent(drec.viewDiv)
-    drec.numConfLabels = []
-    for (let i=0; i<10; i++) {
-      drec.numConfLabels.push(drec.makeDataLabel(p, drec.viewDiv, `${i}: `, "N/A"))
-    }
+    p.createP("The default network has 784 inputs, 2 hidden layers with 88 nodes each, and 10 output nodes. It managed to achieve 95% accuracy on the MNIST test set. This is not a convolutional network.")
+      .parent(drec.viewDiv)
     drec.clearBtn = drec.makeButton(p, drec.viewDiv, "Clear Canvas", 
       () => { 
         drec.userDigit.background(0)
-        drec.userDrawn=false
         drec.numConfLabels.forEach(lbl => lbl.html("N/A"))
-      })
+      }
+    )
+    drec.predPara1 = p.createP()
+    drec.predPara1.parent(drec.viewDiv)
+    drec.predPara2 = p.createP()
+    drec.predPara2.parent(drec.viewDiv)
+    drec.numConfLabels = []
+    for (let i=0; i<10; i++) {
+      const parent = i<5 ? drec.predPara1 :  drec.predPara2
+      drec.numConfLabels.push(drec.makeDataLabel(p, parent, `${i}: `, "N/A", inline=true))
+      p.createSpan(", ").parent(parent)
+    }
+    drec.brushSlider = drec.makeSliderGroup(p, drec.viewDiv, "Brush Size: ", 20, 80, 40, 5)
+    drec.devCb = drec.makeCheckbox(p, drec.viewDiv, 'Show Dev Tools', () => {
+      if (!drec.devCb.checked()) drec.trainDiv.hide()
+      else drec.trainDiv.show()
+    })
     
     // Start Training Div
-    drec.trainDiv = drec.makeDiv(p, "#main", "Developer Controls")
+    drec.trainDiv = drec.makeDiv(p, "#main", "Developer Tools")
     drec.trainImInput = drec.makeFileInputGroup(p, drec.trainDiv, "Training Images: ", drec.loadFile(drec.TYPE_IMAGE, false))
     drec.trainLblInput = drec.makeFileInputGroup(p, drec.trainDiv, "Training Labels: ", drec.loadFile(drec.TYPE_LABEL, false))
     drec.testImInput = drec.makeFileInputGroup(p, drec.trainDiv, "Testing Images: ", drec.loadFile(drec.TYPE_IMAGE, true))
     drec.testLblInput = drec.makeFileInputGroup(p, drec.trainDiv, "Testing Labels: ", drec.loadFile(drec.TYPE_LABEL, true))
     drec.nHiddenNodesInput = drec.makeInputGroup(p, drec.trainDiv, 
-      'N Nodes Per Hidden Layer [1,100]: ', drec.DEFAULT_N_HIDDEN_LAYER_NODES, drec.restart)
+      'N Nodes Per Hidden Layer [1,100]: ', drec.DEFAULT_N_HIDDEN_LAYER_NODES, drec.makeCustomNN)
     drec.nHiddenLayersInput = drec.makeInputGroup(p, drec.trainDiv, 
-      'N Hidden Layers [1,10]: ', drec.DEFAULT_N_HIDDEN_LAYERS, drec.restart)
+      'N Hidden Layers [1,10]: ', drec.DEFAULT_N_HIDDEN_LAYERS, drec.makeCustomNN)
     drec.loadNNButtonP = p.createP("Load NN from JSON: ")
     drec.loadNNButtonP.parent(drec.trainDiv)
     drec.loadNNInput = p.createElement('textarea')
@@ -66,11 +77,10 @@ DigitRecognition = (w, h) => {
     drec.saveNNButtonP = p.createP("Serialize and print NN to Dev Console: ")
     drec.saveNNButtonP.parent(drec.trainDiv)
     drec.makeButton(p, drec.saveNNButtonP, "Serialize", drec.saveNN)
-    if (!drec.DEV) drec.trainDiv.hide()
+    drec.trainDiv.hide()
     // End Training Div
 
     drec.restart()
-    drec.nn = NeuralNetwork.deserialize(JSON.parse(defaultNN))
     drec.initialized = true
   }
 
@@ -78,11 +88,7 @@ DigitRecognition = (w, h) => {
    * Restart
    */
   drec.restart = () => {
-    drec.nn = NeuralNetwork.construct(784, 
-      parseInt(drec.nHiddenNodesInput.value()), 
-      parseInt(drec.nHiddenLayersInput.value()), 
-      10, 
-      parseFloat(drec.lrInput.value()))
+    drec.nn = NeuralNetwork.deserialize(JSON.parse(defaultNN))
   }
 
   /**
@@ -94,14 +100,13 @@ DigitRecognition = (w, h) => {
     drec.userDigit.get().resize(28, 28)
     p.image(drec.userDigit, 0, 0)
     if (p.mouseIsPressed) {
-      drec.userDrawn = true
       drec.userDigit.fill(255)
       drec.userDigit.stroke(255)
-      drec.userDigit.strokeWeight(45)
+      drec.userDigit.strokeWeight(parseInt(drec.brushSlider.value()))
       drec.userDigit.line(p.mouseX, p.mouseY, p.pmouseX, p.pmouseY)
     }
 
-    if(drec.userDrawn) drec.guessUserDigit()
+    drec.guessUserDigit()
   }
 
   /**
@@ -117,7 +122,7 @@ DigitRecognition = (w, h) => {
   }
 
   /**
-   * 
+   * Provide a guess on what the neural network thinks the currently drawn number is
    */
   drec.guessUserDigit = () => {
     let img = drec.userDigit.get()
@@ -140,10 +145,21 @@ DigitRecognition = (w, h) => {
         maxInd = i
       }
     })
-    drec.numConfLabels[maxInd].style('color', '#00ff00')
+    drec.numConfLabels[maxInd].style('color', '#00bb00')
   }
 
-    /**
+  /**
+   * Override NN with a new one based on current dev tool settings
+   */
+  drec.makeCustomNN = () => {
+    drec.nn = NeuralNetwork.construct(784, 
+      parseInt(drec.nHiddenNodesInput.value()), 
+      parseInt(drec.nHiddenLayersInput.value()), 
+      10, 
+      parseFloat(drec.lrInput.value()))
+  }
+
+  /**
    * Trains the current Neural Network and then tests it automatically for a given number of epochs
    * @param {Integer} epochs Number of times to run the entire training dataset through the neural network
    */

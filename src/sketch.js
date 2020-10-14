@@ -1,4 +1,6 @@
 let z = null
+let zp = null
+
 const sketch = ( p ) => {
   const LFA = 0
   const lfa = LinearFunctionApproximator(500, 500)
@@ -9,6 +11,7 @@ const sketch = ( p ) => {
 
   const demos = [lfa, drec, la]
   z = demos
+  zp = p
 
   let demoSelect = null
   const initDemoSelect = () => {
